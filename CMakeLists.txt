@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+
+project(cinq)
+
+set(LEARN_CMAKE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(LEARN_CMAKE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
+set(LEARN_CMAKE_VERSION_MAJOR 0)
+set(LEARN_CMAKE_VERSION_MINOR 0)
+set(LEARN_CMAKE_VERSION_PATCH 0)
+
+set(CMAKE_CXX_STANDARD 14)
+
+include_directories(include)
+
+set(CINQ_SOURCES
+  test.cpp
+)
+
+add_executable(${PROJECT_NAME} ${CINQ_SOURCES})
