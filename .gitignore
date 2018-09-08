@@ -4,7 +4,11 @@ cmake_install.cmake
 CMakeCache.txt
 CMakeFiles/*
 CTestTestfile.cmake
+DartConfiguration.tcl
 Makefile
+tags
 Testing/*
 
 test/CMakeFiles/*
+test/unittest_include-*.cmake
+test/unittest_tests-*.cmake

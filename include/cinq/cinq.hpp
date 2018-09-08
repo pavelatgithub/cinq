@@ -202,6 +202,7 @@ public:
     using value_type = std::pair<const typename InputIterator1::value_type&,
                                  const typename InputIterator2::value_type&>;
     //using difference_type = typename iterator_type::difference_type;
+    using difference_type = typename InputIterator1::difference_type;
     using pointer = value_type*;
     using reference = value_type&;
 

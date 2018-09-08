@@ -5,4 +5,9 @@ set(TEST_SOURCES
     where_test.cpp
 )
 add_executable(unittest ${TEST_SOURCES})
-add_test(NAME CINQ_Test COMMAND unittest)
+
+set(CMAKE_MODULE_PATH "${CMAKE_HOME_DIRECTORY}/3rdparty/catch2")
+
+include(CTest)
+include(Catch)
+catch_discover_tests(unittest)
