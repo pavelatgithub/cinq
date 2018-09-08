@@ -6,6 +6,7 @@ project(cinq)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY}/bin)
 
+include_directories(${CMAKE_HOME_DIRECTORY}/3rdparty)
 include_directories(${CMAKE_HOME_DIRECTORY}/include)
 
 enable_testing()

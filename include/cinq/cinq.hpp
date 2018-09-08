@@ -141,7 +141,7 @@ auto operator%(const enumerable<Iterator>& range,
 
 class sum_tag {};
 
-auto sum() noexcept
+inline auto sum() noexcept
 {
     return sum_tag{};
 }
@@ -179,7 +179,7 @@ private:
 
 class summer_tag {};
 
-auto sum_lazy() noexcept
+inline auto sum_lazy() noexcept
 {
     return summer_tag{};
 }
