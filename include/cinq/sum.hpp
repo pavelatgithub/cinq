@@ -1,61 +1,56 @@
 #pragma once
 
+#include <iterator>
 #include <numeric>
 #include <cinq/enumerable.hpp>
 
 namespace cinq
 {
 
-// Immediate sum calculation.
+namespace detail
+{
+    template <typename InputIterator>
+    auto sum_range(InputIterator begin, InputIterator end)
+    {
+        return std::accumulate(begin, end,
+                typename InputIterator::value_type{});
+    }
+
+    template <typename T>
+    auto sum_range(T* begin, T* end)
+    {
+        return std::accumulate(begin, end, T{});
+    }
+}
 
 class sum_tag {};
 
-inline auto sum() noexcept
-{
-    return sum_tag{};
-}
-
-template <typename Range>
-auto operator%(const Range& range, const sum_tag&)
-{
-    // TODO: support arrays?
-    return std::accumulate(std::cbegin(range), std::cend(range),
-            typename Range::value_type{});
-}
-
-// Lazy sum calculation
-template <typename Range>
-class summer
+class summer_tag
 {
 public:
-    using range_type = Range;
-    using value_type = typename range_type::value_type;
-
-public:
-    summer(const range_type& range)
-        : _range{range}
-    {}
-
-    value_type query() const
-    {
-        return std::accumulate(
-                std::cbegin(_range), std::cend(_range), value_type{});
-    }
-
-private:
-    const range_type& _range;
+    sum_tag operator()() const noexcept { return sum_tag{}; }
 };
 
-class summer_tag {};
-
-inline auto sum_lazy() noexcept
+constexpr
+summer_tag sum() noexcept
 {
-    return summer_tag{};
+    return {};
 }
 
-template <typename Range>
-auto operator%(const Range& range, const summer_tag&)
+template <typename Enumerable>
+auto operator%(const Enumerable& range, const sum_tag&)
 {
-    return summer<Range>{range};
+    return detail::sum_range(std::cbegin(range), std::cend(range));
 }
+
+template <typename Enumerable>
+auto operator%(const Enumerable& range, const summer_tag&)
+{
+    return [begin = std::cbegin(range),
+            end = std::cend(range)]
+    {
+        return detail::sum_range(begin, end);
+    };
+}
+
 }
