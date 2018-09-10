@@ -1,96 +1,109 @@
 #pragma once
 
+#include <algorithm>
+#include <iterator>
 #include <cinq/enumerable.hpp>
 
 namespace cinq
 {
 
-/**
- *
- */
-template <typename InputIterator, typename Condition>
-class wrap_iter_cond
+//
+// Wrapper on any given iterator that adds conditional increment. This is
+// compliant solely with InputIterator requirements, but not others.
+//
+// Note that although this provides difference_type, it does not provide a real
+// difference (i.e. operator-), because resulting data is not yet known. This
+// means that construction vector from this iterator is not going to work, as
+// vector takes difference between two iterators to reserve capacity. But other
+// non-contiguous containers, like list, work fine.
+//
+template <typename Iterator, typename Predicate>
+class where_iterator
 {
 public:
-    using iterator_type = InputIterator;
-    using iterator_category = typename iterator_type::iterator_category;
-    using value_type = typename iterator_type::value_type;
-    using difference_type = typename iterator_type::difference_type;
-    using pointer = typename iterator_type::pointer;
-    using reference = typename iterator_type::reference;
+    using iterator_type     = Iterator;
+    using iterator_category = std::input_iterator_tag;
+    using value_type        = typename iterator_type::value_type;
+    using difference_type   = typename iterator_type::difference_type;
+    using pointer           = typename iterator_type::pointer;
+    using reference         = typename iterator_type::reference;
 
 public:
-    wrap_iter_cond(iterator_type base, iterator_type end, Condition cond)
-        : _it{std::move(base)},
-          _end{std::move(end)},
-          _cond{std::move(cond)}
+    where_iterator(iterator_type base, iterator_type end, Predicate pred)
+        : _it{ std::move(base) },
+          _end{ std::move(end) },
+          _pred{ std::move(pred) }
     {}
 
-    wrap_iter_cond& operator++()
+    where_iterator& operator++()
     {
-        do { ++_it; } while (_it != _end && !_cond(*_it));
+        _it = std::find_if(++_it, _end, _pred);
         return *this;
     }
 
-    wrap_iter_cond operator++(int)
+    where_iterator operator++(int)
     {
-        wrap_iter_cond tmp(*this);
+        where_iterator tmp(*this);
         operator++();
         return tmp;
     }
 
-    reference operator*() const { return _it.operator*(); }
-    pointer operator->() const { return _it.operator->(); }
+    reference operator*()  const { return _it.operator*(); }
+    pointer   operator->() const { return _it.operator->(); }
 
-    iterator_type base() const noexcept { return _it; }
+    friend
+    bool operator==(const where_iterator& lhs,
+                    const where_iterator& rhs)
+    {
+        return lhs._it == rhs._it;
+    }
+
+    friend
+    bool operator!=(const where_iterator& lhs,
+                    const where_iterator& rhs)
+    {
+        return !(lhs == rhs);
+    }
 
 private:
     iterator_type _it;
     iterator_type _end;
-    Condition _cond;
+    Predicate     _pred;
 };
 
-template <typename I, typename C>
-bool operator==(const wrap_iter_cond<I, C>& lhs,
-                const wrap_iter_cond<I, C>& rhs)
-{
-   return lhs.base() == rhs.base();
-}
-
-template <typename I, typename C>
-bool operator!=(const wrap_iter_cond<I, C>& lhs,
-                const wrap_iter_cond<I, C>& rhs)
-{
-    return lhs.base() != rhs.base();
-}
-
 template <typename Predicate>
-class where_closure
+struct where_closure
 {
-public:
-    where_closure(Predicate pred)
-        : pred(std::move(pred))
-    {}
-
-    Predicate predicate() const { return pred; }
-
-private:
     Predicate pred;
 };
 
-template <typename Condition>
-auto where(Condition&& cond) noexcept
+template <typename Predicate>
+auto where(Predicate&& pred) noexcept
 {
-    return where_closure<Condition>{std::forward<Condition>(cond)};
+    return where_closure<Predicate>{ std::forward<Predicate>(pred) };
 }
 
 template <typename Iterator, typename Predicate>
 auto operator%(const enumerable<Iterator>& range,
-               const where_closure<Predicate>& pred)
+               const where_closure<Predicate>& closure)
 {
-    return enumerable<wrap_iter_cond<Iterator, Predicate>>{
-        {range.begin(), range.end(), pred.predicate()},
-        {range.end(), range.end(), pred.predicate()}};
+    return enumerable<where_iterator<Iterator, Predicate>>{
+            { range.begin(), range.end(), closure.pred },
+            { range.end(), range.end(), closure.pred }};
+}
+
+// TODO: decide if we need to support where without from.
+
+template <typename Enumerable, typename Predicate>
+auto operator%(const Enumerable& range,
+               const where_closure<Predicate>& closure)
+{
+    auto begin = std::cbegin(range);
+    auto end = std::cend(range);
+
+    return enumerable<where_iterator<decltype(begin), Predicate>>{
+            { begin, end, closure.pred },
+            { end, end, closure.pred }};
 }
 
 }
